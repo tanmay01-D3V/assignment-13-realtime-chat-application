@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseChat | Real-Time Group Messaging Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Login Modal Overlay -->
+  <div id="login-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="brand-badge">
+        <span class="pulse-dot"></span> Socket.io v4
+      </div>
+      <h2>Join PulseChat</h2>
+      <p class="subtitle">Real-Time Multi-Room Messaging & Presence Engine</p>
+      
+      <form id="login-form">
+        <label for="username-input">Choose Your Handle</label>
+        <div class="input-group">
+          <input type="text" id="username-input" placeholder="e.g. Aarav, Priya, Rohan" required autocomplete="off" maxlength="25">
+        </div>
+
+        <label>Select Your Avatar</label>
+        <div class="avatar-picker" id="avatar-picker">
+          <div class="avatar-option selected" data-avatar="👨‍💻">👨‍💻</div>
+          <div class="avatar-option" data-avatar="👩‍💻">👩‍💻</div>
+          <div class="avatar-option" data-avatar="⚡">⚡</div>
+          <div class="avatar-option" data-avatar="🚀">🚀</div>
+          <div class="avatar-option" data-avatar="🤖">🤖</div>
+          <div class="avatar-option" data-avatar="🦊">🦊</div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btn-enter-chat">
+          Connect to Channels ➔
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Chat Dashboard -->
+  <div class="app-container" id="app-container">
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">💬</span>
+          <span class="logo-text">PulseChat</span>
+        </div>
+        <div class="current-user-card" id="current-user-card">
+          <span class="user-avatar" id="my-avatar">👨‍💻</span>
+          <div class="user-info">
+            <span class="user-name" id="my-name">User</span>
+            <span class="user-status"><span class="status-indicator online"></span> Online</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Channels / Rooms Section -->
+      <div class="sidebar-section">
+        <div class="section-title">CHANNELS</div>
+        <ul class="room-list" id="room-list">
+          <li class="room-item active" data-room="general">
+            <span class="room-hash">#</span>
+            <span class="room-name">general</span>
+          </li>
+          <li class="room-item" data-room="developers">
+            <span class="room-hash">#</span>
+            <span class="room-name">developers</span>
+          </li>
+          <li class="room-item" data-room="random">
+            <span class="room-hash">#</span>
+            <span class="room-name">random</span>
+          </li>
+        </ul>
+
+        <div class="add-room-wrapper">
+          <input type="text" id="new-room-input" placeholder="Join/Create #room..." maxlength="20">
+          <button id="btn-add-room" title="Join or create channel">+</button>
+        </div>
+      </div>
+
+      <!-- Active Users in Current Room -->
+      <div class="sidebar-section users-section">
+        <div class="section-title">
+          ROOM PARTICIPANTS (<span id="user-count">0</span>)
+        </div>
+        <ul class="user-list" id="room-user-list">
+          <!-- Populated dynamically via socket events -->
+        </ul>
+      </div>
+
+      <!-- Global Online Directory for Direct Messages -->
+      <div class="sidebar-section dm-section">
+        <div class="section-title">
+          DIRECT MESSAGES (CLICK TO DM)
+        </div>
+        <ul class="user-list" id="global-user-list">
+          <!-- Populated dynamically -->
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Main Chat View Area -->
+    <main class="chat-main">
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <div class="room-meta">
+          <h2 id="active-room-title">#general</h2>
+          <span class="room-desc" id="active-room-desc">Public discussion hub for all members</span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-sound-toggle" class="btn-icon" title="Toggle audio alerts">🔔</button>
+        </div>
+      </header>
+
+      <!-- Message History Stream -->
+      <div class="messages-container" id="messages-container">
+        <!-- Messages rendered dynamically -->
+      </div>
+
+      <!-- Typing Indicator -->
+      <div class="typing-indicator-bar" id="typing-indicator-bar">
+        <span class="typing-dots">
+          <span></span><span></span><span></span>
+        </span>
+        <span id="typing-text">Someone is typing...</span>
+      </div>
+
+      <!-- Message Composer Bar -->
+      <form class="chat-composer" id="chat-composer">
+        <input 
+          type="text" 
+          id="message-input" 
+          placeholder="Send a message to #general..." 
+          autocomplete="off"
+          required
+        >
+        <button type="submit" class="btn-send" id="btn-send-message">
+          <span>Send</span>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </form>
+    </main>
+  </div>
+
+  <!-- Direct Message (DM) Modal Dialog -->
+  <div id="dm-modal" class="dm-overlay hidden">
+    <div class="dm-window">
+      <div class="dm-header">
+        <div class="dm-recipient-info">
+          <span class="dm-avatar" id="dm-recipient-avatar">👩‍💻</span>
+          <div>
+            <h3 id="dm-recipient-name">Direct Message</h3>
+            <span class="dm-status">End-to-End Private Socket Dispatch</span>
+          </div>
+        </div>
+        <button class="dm-close" id="btn-close-dm">&times;</button>
+      </div>
+      
+      <div class="dm-messages" id="dm-messages">
+        <!-- Private messages rendered dynamically -->
+      </div>
+
+      <form class="dm-composer" id="dm-composer">
+        <input type="text" id="dm-input" placeholder="Type a private message..." autocomplete="off" required>
+        <button type="submit" class="btn-send-dm">Send DM</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
